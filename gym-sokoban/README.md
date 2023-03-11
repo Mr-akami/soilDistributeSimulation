@@ -1,7 +1,25 @@
+# 使い方
+
+gym-sokobanの環境をインストール
+```
+cd gym-sokoban
+pip install -e .
+```
+
+DQN_discrete.pyをVS Codeで開いて、F5 -> pythoを指定して実行
+
+実行が開始されるとターミナルに進捗のログが表示され、実行が終了すると施行結果がgifで表示される。  
+また、プロジェクト直下にoutput.gifが生成される。
+
+
+以下はClone元のリポジトリのReadme
+=========================
+
 # gym-sokoban 
 [Sokoban](https://en.wikipedia.org/wiki/Sokoban) is Japanese for warehouse keeper and a traditional video game.
 The game is a transportation puzzle, where the player has to push all boxes in the room on the storage locations/ targets.
 The possibility of making irreversible mistakes makes these puzzles so challenging especially for [Reinforcement Learning](https://en.wikipedia.org/wiki/Reinforcement_learning) algorithms, which mostly lack the ability to think ahead.
+
 <br/>The repository implements the game Sokoban based on the rules presented [DeepMind's]() paper [Imagination Augmented Agents for Deep Reinforcement Learning](https://papers.nips.cc/paper/7152-imagination-augmented-agents-for-deep-reinforcement-learning). 
 The room generation is random and therefore, will allow to train Deep Neural Networks without overfitting on a set of predefined rooms.
 
