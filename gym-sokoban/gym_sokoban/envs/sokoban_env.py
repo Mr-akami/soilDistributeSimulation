@@ -31,12 +31,12 @@ class SokobanEnv(gym.Env):
         self.boxes_on_target = 0
 
         # Penalties and Rewards
-        # self.penalty_for_step = -0.1
         self.penalty_for_step = -0.1
-        self.penalty_box_off_target = -1
-        self.reward_box_on_target = 20
+        # self.penalty_box_off_target = -1
+        self.penalty_box_off_target = -0.2
+        self.reward_box_on_target = 10 # 20, 600 loop
         # self.reward_finished = 10
-        self.reward_finished = self.reward_box_on_target * num_boxes * 10
+        self.reward_finished = self.reward_box_on_target * num_boxes * 100 * 3
         self.reward_last = 0
 
         # Other Settings
@@ -44,7 +44,8 @@ class SokobanEnv(gym.Env):
         self.max_steps = max_steps
         self.action_space = Discrete(len(ACTION_LOOKUP))
         screen_height, screen_width = (dim_room[0] * 16, dim_room[1] * 16)
-        self.observation_space = Box(low=0, high=255, shape=(screen_height, screen_width, 3), dtype=np.uint8)
+        # self.observation_space = Box(low=0, high=255, shape=(screen_height, screen_width, 3), dtype=np.uint8)
+        self.observation_space = Box(low = 0, high = 1, shape = (4 * dim_room[0] * dim_room[1], ), dtype = np.uint8)
         self.hasBox = False
         
         if reset:
@@ -56,7 +57,8 @@ class SokobanEnv(gym.Env):
         return [seed]
 
     def step(self, action, observation_mode='raw'):
-        assert action in ACTION_LOOKUP
+        # assert action in ACTION_LOOKUP # PROではActionの確率密度が入力される
+        # action = np.argmax(action)
         assert observation_mode in ['rgb_array', 'tiny_rgb_array', 'raw']
 
         self.num_env_steps += 1
@@ -83,8 +85,9 @@ class SokobanEnv(gym.Env):
         if done:
             info["maxsteps_used"] = self._check_if_maxsteps()
             info["all_boxes_on_target"] = self._check_if_all_boxes_on_target()
+            print('{} boxes on target, reward {}'.format(self.boxes_on_target, self.reward_last))
 
-        return torch.flatten(torch.from_numpy(observation).clone()), self.reward_last, done, info
+        return torch.flatten(torch.from_numpy(observation).clone()).to(device='cuda'), self.reward_last, done, info
 
     def _push(self, action):
         """
@@ -199,6 +202,11 @@ class SokobanEnv(gym.Env):
         # that short solutions have a higher reward.
         self.reward_last += self.penalty_for_step
         
+        # When player carries a box, he gets a small penalty.
+        # current_position = self.player_position.copy()
+        # if self.room_state[current_position[0], current_position[1]] == 7:
+        #     self.reward_last += self.penalty_for_step
+        
         # # Every moving box step is a small penalty.
         # current_position = self.player_position.copy()
         # if self.room_state[current_position[0], current_position[1]] == 7:
@@ -208,12 +216,13 @@ class SokobanEnv(gym.Env):
         current_boxes_on_target = np.count_nonzero(self.room_fixed == 3)
 
         # Add the reward if a box is pushed on the target and give a
-        # penalty if a box is pushed off the target.
+        # penalty if a box is pushed off the target.        env.render(mode='human')
         if current_boxes_on_target > self.boxes_on_target:
-            self.reward_last += self.reward_box_on_target
-            print('Box on Target', current_boxes_on_target)
-        elif current_boxes_on_target < self.boxes_on_target:
-            self.reward_last += self.penalty_box_off_target * 2
+            self.reward_last += self.reward_box_on_target * current_boxes_on_target
+            # print('Box on Target: {}, reward: {}'.format(current_boxes_on_target, self.reward_last))
+        elif current_boxes_on_target < self.num_boxes:
+            # self.reward_last += self.penalty_box_off_target * 5 * (self.boxes_on_target - current_boxes_on_target)
+            self.reward_last += self.penalty_box_off_target
 
         game_won = self._check_if_all_boxes_on_target()        
         if game_won:
@@ -283,9 +292,10 @@ class SokobanEnv(gym.Env):
         self.num_env_steps = 0
         self.reward_last = 0
         self.boxes_on_target = 0
+        self.hasBox = False
 
         starting_observation = self.render(render_mode)
-        return torch.flatten(torch.from_numpy(starting_observation).clone())
+        return torch.flatten(torch.from_numpy(starting_observation).clone()).to(device='cuda')
 
     def render(self, mode='human', close=None, scale=1):
         assert mode in RENDERING_MODES

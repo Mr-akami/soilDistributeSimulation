@@ -30,7 +30,8 @@ class Algorithm(ABC):
         """ 決定論的な行動を返す． """
         state = torch.tensor(state, dtype=torch.float, device=self.device).unsqueeze_(0)
         with torch.no_grad():
-            action = self.actor(state)
+            # action = self.actor(state) # 同ステップで同じ値しか出てこないので、確率論的な行動で代用する
+            action, _ = self.actor.sample(state)
         return action.cpu().numpy()[0]
 
     @abstractmethod
