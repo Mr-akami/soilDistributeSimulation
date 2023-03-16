@@ -198,7 +198,7 @@ epsilon_func = lambda step: max(epsilon_end, epsilon_begin - (epsilon_begin - ep
 """
 gamma = 0.99  #　割引率
 batch_size = 32
-n_episodes = 2  # 学習を行うエピソード数
+n_episodes = 800  # 学習を行うエピソード数
 
 
 def update(batch_size, beta):
@@ -252,6 +252,8 @@ for episode in range(n_episodes):
     total_reward = 0
 
     while not done:
+        # time.sleep(0.01)
+        # env.render(mode='human')
         # ε-greedyで行動を選択
         action = net.act(obs.float().to(device), epsilon_func(step)) # obsにfloat()がないっぽい、env.resetについてみるか
         # 環境中で実際に行動
